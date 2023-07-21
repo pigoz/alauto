@@ -2,15 +2,13 @@ require 'bundler/inline'
 
 gemfile do
   source 'https://rubygems.org'
-  gem 'json'
+  gem 'awesome_print'
 end
 
-require 'tempfile'
+class App
+  KEYCODE_B = '0x0B'
+  KEYCODE_C = '0x08'
 
-KEYCODE_B = '0x0B'
-KEYCODE_C = '0x08'
-
-class Runloop
   def minutes
     4
   end
@@ -31,21 +29,21 @@ class OsaScript
     exec <<-JS
 ObjC.import('Carbon')
 pid = Application("System Events").processes['Azur Lane'].unixId();
-keycode_c = 0x08;
-keycode_b = 0x0B;
-enterDown = $.CGEventCreateKeyboardEvent($(), #{keycode}, true);
-enterUp = $.CGEventCreateKeyboardEvent($(), #{keycode}, false);
-$.CGEventPostToPid(pid, enterDown);
+kdown = $.CGEventCreateKeyboardEvent($(), #{keycode}, true);
+kup = $.CGEventCreateKeyboardEvent($(), #{keycode}, false);
+$.CGEventPostToPid(pid, kdown);
 delay(0.1);
-$.CGEventPostToPid(pid, enterUp);
+$.CGEventPostToPid(pid, kup);
 pid
     JS
   end
 
-
   private
 
   def exec(js)
+    require 'json'
+    require 'tempfile'
+
     file = Tempfile.new('alauto')
     IO.write(file, js)
     JSON.parse(`osascript -s s -l JavaScript #{file.path}`)
@@ -79,4 +77,4 @@ class Timer
   end
 end
 
-Runloop.new.call
+App.new.call
